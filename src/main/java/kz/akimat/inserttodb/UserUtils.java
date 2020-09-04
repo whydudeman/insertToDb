@@ -12,8 +12,7 @@ public class UserUtils {
 
     public static List<User> getUsers() {
         try {
-            Connection con = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3307/asdas", "root", "");
+            Connection con = DriverManager.getConnection(DbConstants.jdbcURL, DbConstants.username, DbConstants.password);
 
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("select u.id, u.name, d.name from user u\n" +
