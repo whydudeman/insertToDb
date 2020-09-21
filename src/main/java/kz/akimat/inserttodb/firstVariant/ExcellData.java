@@ -1,9 +1,10 @@
-package kz.akimat.inserttodb;
+package kz.akimat.inserttodb.firstVariant;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 
+import java.awt.print.Pageable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,10 +12,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class NewExcellData {
+public class ExcellData {
     public Integer protocolPoint;
     public String taskText;
-    public List<String> userNames;
+    public String userName;
     public String executor;
     public Date deadline;
     public String status;
@@ -27,27 +28,16 @@ public class NewExcellData {
     public String districtId;
     public List<String> departments;
 
-    public NewExcellData(Row row) {
-        String extension = getStringFromRowByIndex(row.getCell(0));//Номер
-//        System.out.println(extension);
-        String substring = extension.substring(extension.lastIndexOf(".") + 1);
-//        System.out.println("SUBSTRING"+substring);
+    public ExcellData(Row row, String districtId) {
+
+        this.protocolPoint = getIntegerFromRowByIndex(row.getCell(0));//Номер
+
         this.taskText = getStringFromRowByIndex(row.getCell(1));//Поручение
-//        System.out.println(taskText);
-        protocolPoint=Integer.valueOf(substring);
-         String usernameString = getStringFromRowByIndex(row.getCell(2));//Ответственный за координацию (замакима)
-        List<String> names=new ArrayList<>();
-        List<String> usernames=new ArrayList<>(Arrays.asList(usernameString.split(",")));
-        for(String username:usernames){
-            names.add(username.trim());
-        }
-        this.userNames=names;
+        this.userName = getStringFromRowByIndex(row.getCell(2));//Ответственный за координацию (замакима)
         this.executor = getStringFromRowByIndex(row.getCell(3));//Ответственный за исполнение
         this.deadline = getDateFromRowByIndex(row.getCell(4));//Срок исполнения
         String statusText = row.getCell(6).getStringCellValue();//Статус
         if (statusText.contains("На исполнении"))
-            this.status = "IN_PROGRESS";
-        if (statusText.contains("В работе"))
             this.status = "IN_PROGRESS";
         if (statusText.contains("Исполнено"))
             this.status = "DONE";
@@ -55,14 +45,13 @@ public class NewExcellData {
             this.status = "NOT_DONE";
         this.result = row.getCell(7).getStringCellValue();//Информация по исполнению
         this.sphere = getStringFromRowByIndex(row.getCell(8));//Сфера
-        this.protocolTitle = getStringFromRowByIndex(row.getCell(10));//Наименование протокола
-        this.protocolDate = getDateFromRowByIndex(row.getCell(9));//Дата протокола
-        this.protocolNumber = getStringFromRowByIndex(row.getCell(11));//Номер протокола
+        this.protocolTitle = getStringFromRowByIndex(row.getCell(9));//Наименование протокола
+        this.protocolDate = getDateFromRowByIndex(row.getCell(10));//Дата протокола
+        this.protocolNumber = districtId + "-" + getStringFromRowByIndex(row.getCell(11));//Номер протокола
         this.protocolType = getStringFromRowByIndex(row.getCell(12));//Тип протокола
         this.districtId = districtId;
         List<String> stringList = new ArrayList<>(Arrays.asList(executor.replace("совместно", ",").split(",")));
         List<String> splitByComma = new ArrayList<>(Arrays.asList(executor.replace("\n", ",").split(",")));
-
         if (!splitByComma.isEmpty()) {
             if (!stringList.isEmpty()) {
                 splitByComma.addAll(stringList);
@@ -107,7 +96,7 @@ public class NewExcellData {
             } catch (ParseException e) {
             }
         }
-//        System.out.println(date + " IT IS DATE");
+        System.out.println(date + " IT IS DATE");
         return null;
 
     }

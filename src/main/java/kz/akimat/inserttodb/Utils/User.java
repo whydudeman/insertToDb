@@ -1,4 +1,4 @@
-package kz.akimat.inserttodb;
+package kz.akimat.inserttodb.Utils;
 
 public class User {
     private Long id;

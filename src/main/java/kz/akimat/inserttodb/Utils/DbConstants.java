@@ -1,4 +1,4 @@
-package kz.akimat.inserttodb;
+package kz.akimat.inserttodb.Utils;
 
 public class DbConstants {
     public final static String jdbcURL = "jdbc:mysql://localhost:3307/asdas";

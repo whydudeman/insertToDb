@@ -1,4 +1,4 @@
-package kz.akimat.inserttodb;
+package kz.akimat.inserttodb.Utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class UserUtils {
 
@@ -52,7 +51,7 @@ public class UserUtils {
         List<Long> ids = new ArrayList<>();
         for (String name : names) {
             for (User user : users) {
-                if (levenstain(user.getName(), name) < 4 || levenstain(user.getNameWithSpace(), name) < 4)
+                if (user.getId()!=74 &&(levenstain(user.getName(), name) < 4 || levenstain(user.getNameWithSpace(), name) < 4))
                     ids.add(user.getId());
             }
 

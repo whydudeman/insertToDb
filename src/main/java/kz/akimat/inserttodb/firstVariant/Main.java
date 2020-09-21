@@ -1,5 +1,8 @@
-package kz.akimat.inserttodb;
+package kz.akimat.inserttodb.firstVariant;
 
+import kz.akimat.inserttodb.Utils.DbConstants;
+import kz.akimat.inserttodb.Utils.User;
+import kz.akimat.inserttodb.Utils.UserUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -13,10 +16,10 @@ import java.sql.*;
 import java.util.List;
 import java.util.Objects;
 
-public class NewMain {
+public class Main {
     public static void main(String... strings) throws IOException, SQLException {
-        NewMain objExcelFile = new NewMain();
-        String fileName = "kiki.xlsx";
+        Main objExcelFile = new Main();
+        String fileName = "bibi.xlsx";
         String path = "/home/nurbol/Downloads/";
         Workbook workbook = getExcelDocument(fileName, path);
         objExcelFile.processExcelObject(workbook);
@@ -45,18 +48,19 @@ public class NewMain {
             Sheet sheet = workbook.getSheetAt(i);
             int rowCount = sheet.getLastRowNum() - sheet.getFirstRowNum();
             String sheetName = sheet.getSheetName();
-            for (int j = 1; j < rowCount; j++) {
+            String districtId = (sheetName.substring(0, 1)).trim(); //Getting districtId from first 2 symbols of Page name
+            for (int j = rowCount; j <= rowCount; j++) {
                 Row row = sheet.getRow(j);
-                insertAndUpdateTask(users, row);
+                insertAndUpdateTask(users, districtId, row);
             }
         }
     }
 
-    private void insertAndUpdateTask(List<User> users, Row row) throws SQLException {
-        NewExcellData excellData = new NewExcellData(row);
-        List<Long> userId = UserUtils.getUsersId(excellData.userNames, users);
+    private void insertAndUpdateTask(List<User> users, String districtId, Row row) throws SQLException {
+        ExcellData excellData = new ExcellData(row, districtId);
+        Long userId = UserUtils.getUserId(excellData.userName, users);
         List<Long> executorIds = UserUtils.getUserIdByDepartment(excellData.departments, users);
-        System.out.println(row.getRowNum());
+        System.out.println(row.getRowNum() + " " + districtId);
         if (userId != null && !executorIds.isEmpty()) {
             Long protocolId = getProtocolIdFromDB(excellData.protocolNumber);
             if (protocolId != null) {
@@ -67,42 +71,44 @@ public class NewMain {
                         throw new NullPointerException("NULLERROR");
                     }
                     taskId = createTask(excellData, protocolId, sphereId);
+                    System.out.println("TASK_ID: " + taskId);
                     createTaskUserInDb(taskId, executorIds);
                     createTaskHistoryInDB(taskId);
-                    for (Long userLongId : userId)
-                        if (getTaskUser(taskId, userLongId, "CONTROL") == null)
-                            createTaskUserInDb(taskId, userLongId);
+                    if (getTaskUser(taskId, userId, "CONTROL") == null)
+                        createTaskUserInDb(taskId, userId,true);
                 }
-                if (taskId != null) {
-                    if (isTaskNeedsChange(taskId, excellData.status)) {
-                        updateTaskInDB(taskId, excellData);
-                        createTaskHistoryInDB(taskId);
-                        createTaskUserInDb(taskId, executorIds);
-                        for (Long userLongId : userId)
-                            if (getTaskUser(taskId, userLongId, "CONTROL") == null)
-                                createTaskUserInDb(taskId, userId);
-                    }
-                } else {
-                    System.out.println("TASK: Error could not found and create Task, userName: " + excellData.userNames
-                            + " protocolNumber " + excellData.protocolNumber + " Row number: " + row.getRowNum());
-                }
+
+//                if (taskId != null) {
+//
+//                    if (isTaskNeedsChange(taskId, excellData.status)) {
+//                        updateTaskInDB(taskId, excellData);
+//                        createTaskHistoryInDB(taskId);
+//                        createTaskUserInDb(taskId, executorIds);
+//                        if (getTaskUser(taskId, userId, "CONTROL") == null)
+//                            createTaskUserInDb(taskId, userId,true);
+//
+//                    }
+//                } else {
+//                    System.out.println("TASK: Error could not found and Ta Task, userName: " + excellData.userName
+//                            + " protocolNumber " + excellData.protocolNumber + " Row number: " + row.getRowNum());
+//                }
             } else {
-                System.out.println("PROTOCOL: Could not find protocol from db" + " Number: " + excellData.protocolPoint + " Row number: " + row.getRowNum() + " DistrictId: ");
+                System.out.println("PROTOCOL: Could not find protocol from db" + " Number: " + excellData.protocolPoint + " Row number: " + row.getRowNum() + " DistrictId: " + districtId);
             }
         } else {
-            System.out.println("USER: Error could not found User from DB, userName: " + excellData.userNames
+            System.out.println("USER: Error could not found User from DB, userName: " + excellData.userName
                     + " protocolNumber " + excellData.protocolNumber + " Row number: " + row.getRowNum() + " UserId: "
                     + userId + " Executors: " + excellData.executor + " ids: " + executorIds.toString());
         }
     }
 
-    private Long createTask(NewExcellData excellData, Long protocolId, Long sphereId) {
+    private Long createTask(ExcellData excellData, Long protocolId, Long sphereId) {
         String SQL_INSERT = "INSERT INTO `task`(`created_at`, `updated_at`,`deadline`, `protocol_point`, `result`, " +
                 "`status`, `task_text`, `author_id`,`protocol_id`, `sphere_id`) " +
                 "VALUES (NOW(), NOW(),?,?,?,?,?,?,?,?)";
         Date deadline = null;
         if (excellData.deadline != null) {
-            deadline = new Date(excellData.deadline.getTime());
+            deadline = new java.sql.Date(excellData.deadline.getTime());
         }
         try (
                 Connection connection = DriverManager.getConnection(DbConstants.jdbcURL, DbConstants.username, DbConstants.password);
@@ -202,13 +208,13 @@ public class NewMain {
         return getIdWithValueAndQuery(sphere, SQL_SELECT);
     }
 
-    private static void updateTaskInDB(Long taskId, NewExcellData excellData) {
+    private static void updateTaskInDB(Long taskId, ExcellData excellData) {
 
         String SQL_INSERT = "UPDATE `task` SET  `updated_at`=NOW(),`deadline`=?,`protocol_point`=?," +
                 "`result`=?,`status`=?,`task_text`=?,`author_id`=? WHERE id=?";
         Date deadline = null;
         if (excellData.deadline != null) {
-            deadline = new Date(excellData.deadline.getTime());
+            deadline = new java.sql.Date(excellData.deadline.getTime());
         }
         try (
                 Connection connection = DriverManager.getConnection(DbConstants.jdbcURL, DbConstants.username, DbConstants.password);
@@ -230,16 +236,17 @@ public class NewMain {
 
     }
 
-    private void createTaskUserInDb(Long taskId, Long userId) {
+    private void createTaskUserInDb(Long taskId, Long userId,boolean isMain) {
         String SQL_INSERT = "INSERT INTO `task_user`( `created_at`, `updated_at`, `is_main`, " +
-                "`type`, `task_id`, `user_id`) VALUES (NOW(),NOW(),1,?,?,?)";
+                "`type`, `task_id`, `user_id`) VALUES (NOW(),NOW(),?,?,?,?)";
         try (
                 Connection connection = DriverManager.getConnection(DbConstants.jdbcURL, DbConstants.username, DbConstants.password);
                 PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
         ) {
-            statement.setString(1, "CONTROL");
-            statement.setLong(2, taskId);
-            statement.setLong(3, userId);
+            statement.setBoolean(1,isMain);
+            statement.setString(2, "CONTROL");
+            statement.setLong(3, taskId);
+            statement.setLong(4, userId);
             statement.executeUpdate();
             // ...
         } catch (SQLException e) {
@@ -251,20 +258,27 @@ public class NewMain {
 
     private void createTaskUserInDb(Long taskId, List<Long> executersId) {
         String SQL_INSERT = "INSERT INTO `task_user`( `created_at`, `updated_at`, `is_main`, " +
-                "`type`, `task_id`, `user_id`) VALUES (NOW(),NOW(),1,?,?,?)";
+                "`type`, `task_id`, `user_id`) VALUES (NOW(),NOW(),?,?,?,?)";
+        int count=1;
         for (Long id : executersId) {
+            boolean isMain=false;
+            if(count==1)
+                isMain=true;
+
             try (
                     Connection connection = DriverManager.getConnection(DbConstants.jdbcURL, DbConstants.username, DbConstants.password);
                     PreparedStatement statement = connection.prepareStatement(SQL_INSERT);
             ) {
-                statement.setString(1, "EXECUTION");
-                statement.setLong(2, taskId);
-                statement.setLong(3, id);
+                statement.setBoolean(1,isMain);
+                statement.setString(2, "EXECUTION");
+                statement.setLong(3, taskId);
+                statement.setLong(4, id);
                 statement.executeUpdate();
                 // ...
             } catch (SQLException e) {
                 System.out.println("EXECUTION: TASK AND USER ALREADY EXISTS");
             }
+            count++;
         }
 
     }
@@ -303,7 +317,6 @@ public class NewMain {
             if (preparedStatement != null) preparedStatement.close();
             if (conn != null) conn.close();
         }
-
         return null;
     }
 }
