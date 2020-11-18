@@ -19,7 +19,7 @@ import java.util.Objects;
 public class Main {
     public static void main(String... strings) throws IOException, SQLException {
         Main objExcelFile = new Main();
-        String fileName = "bibi.xlsx";
+        String fileName = "asdas.xlsx";
         String path = "/home/nurbol/Downloads/";
         Workbook workbook = getExcelDocument(fileName, path);
         objExcelFile.processExcelObject(workbook);
@@ -48,21 +48,23 @@ public class Main {
             Sheet sheet = workbook.getSheetAt(i);
             int rowCount = sheet.getLastRowNum() - sheet.getFirstRowNum();
             String sheetName = sheet.getSheetName();
-            String districtId = (sheetName.substring(0, 1)).trim(); //Getting districtId from first 2 symbols of Page name
+//            String districtId = (sheetName.substring(0, 1)).trim(); //Getting districtId from first 2 symbols of Page name
             for (int j = rowCount; j <= rowCount; j++) {
                 Row row = sheet.getRow(j);
-                insertAndUpdateTask(users, districtId, row);
+                insertAndUpdateTask(users, row);
+                System.out.println(j);
             }
         }
     }
 
-    private void insertAndUpdateTask(List<User> users, String districtId, Row row) throws SQLException {
-        ExcellData excellData = new ExcellData(row, districtId);
+    private void insertAndUpdateTask(List<User> users, Row row) throws SQLException {
+        ExcellData excellData = new ExcellData(row);
         Long userId = UserUtils.getUserId(excellData.userName, users);
         List<Long> executorIds = UserUtils.getUserIdByDepartment(excellData.departments, users);
-        System.out.println(row.getRowNum() + " " + districtId);
+        System.out.println(row.getRowNum() + " ");
         if (userId != null && !executorIds.isEmpty()) {
             Long protocolId = getProtocolIdFromDB(excellData.protocolNumber);
+
             if (protocolId != null) {
                 Long taskId = getTaskIdFromDB(protocolId, excellData.protocolPoint);
                 if (taskId == null) {
@@ -93,7 +95,7 @@ public class Main {
 //                            + " protocolNumber " + excellData.protocolNumber + " Row number: " + row.getRowNum());
 //                }
             } else {
-                System.out.println("PROTOCOL: Could not find protocol from db" + " Number: " + excellData.protocolPoint + " Row number: " + row.getRowNum() + " DistrictId: " + districtId);
+                System.out.println("PROTOCOL: Could not find protocol from db" + " Number: " + excellData.protocolPoint + " Row number: " + row.getRowNum());
             }
         } else {
             System.out.println("USER: Error could not found User from DB, userName: " + excellData.userName

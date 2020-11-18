@@ -28,9 +28,11 @@ public class ExcellData {
     public String districtId;
     public List<String> departments;
 
-    public ExcellData(Row row, String districtId) {
-
-        this.protocolPoint = getIntegerFromRowByIndex(row.getCell(0));//Номер
+    public ExcellData(Row row) {
+        String protocolPointFull=getStringFromRowByIndex(row.getCell(0));
+        String protocolPointString=protocolPointFull.substring(protocolPointFull.lastIndexOf(",") + 1);
+        this.protocolPoint = Integer.valueOf(protocolPointString);
+//        this.protocolPoint=getStringFromRowByIndex(row.getCell(0));
 
         this.taskText = getStringFromRowByIndex(row.getCell(1));//Поручение
         this.userName = getStringFromRowByIndex(row.getCell(2));//Ответственный за координацию (замакима)
@@ -38,6 +40,8 @@ public class ExcellData {
         this.deadline = getDateFromRowByIndex(row.getCell(4));//Срок исполнения
         String statusText = row.getCell(6).getStringCellValue();//Статус
         if (statusText.contains("На исполнении"))
+            this.status = "IN_PROGRESS";
+        if (statusText.contains("В работе"))
             this.status = "IN_PROGRESS";
         if (statusText.contains("Исполнено"))
             this.status = "DONE";

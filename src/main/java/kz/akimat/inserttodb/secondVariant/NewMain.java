@@ -19,7 +19,7 @@ import java.util.Objects;
 public class NewMain {
     public static void main(String... strings) throws IOException, SQLException {
         NewMain objExcelFile = new NewMain();
-        String fileName = "vvvaaa.xlsx";
+        String fileName = "asdas.xlsx";
         String path = "/home/nurbol/Downloads/";
         Workbook workbook = getExcelDocument(fileName, path);
         objExcelFile.processExcelObject(workbook);
@@ -62,10 +62,11 @@ public class NewMain {
         System.out.println(row.getRowNum());
         if (userId != null && !executorIds.isEmpty()) {
             Long protocolId = getProtocolIdFromDB(excellData.protocolNumber);
+            System.out.println("Protocol Id: "+protocolId);
             if (protocolId != null) {
                 Long taskId = null;
                 if (taskId == null) {
-                    Long sphereId = getSphereIdFromDB(excellData.sphere);
+                    Long sphereId = getSphereIdFromDB(excellData.sphere.trim());
                     if (sphereId == null) {
                         System.out.println("SPHERE IS NULL");
                         throw new NullPointerException("NULLERROR");
@@ -199,6 +200,7 @@ public class NewMain {
             preparedStatement.setString(1, value);
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
+                System.out.println(rs.getLong(1)+" Getting from db");
                 return rs.getLong(1);
             }
         } catch (SQLException e) {
@@ -209,7 +211,7 @@ public class NewMain {
     }
 
     private Long getSphereIdFromDB(String sphere) {
-        System.out.println(sphere);
+        System.out.println(sphere+" Sphere");
         String SQL_SELECT = "SELECT id from sphere where name=?";
         return getIdWithValueAndQuery(sphere, SQL_SELECT);
     }

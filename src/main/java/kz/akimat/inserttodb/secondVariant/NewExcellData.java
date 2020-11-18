@@ -34,7 +34,9 @@ public class NewExcellData {
 //        System.out.println("SUBSTRING"+substring);
 
 //        System.out.println(taskText);
-        this.protocolPoint=getIntegerFromRowByIndex(row.getCell(0));
+        String protocolPointFull=getStringFromRowByIndex(row.getCell(0));
+        String protocolPointString=protocolPointFull.substring(protocolPointFull.lastIndexOf(",") + 1);
+        this.protocolPoint = Integer.valueOf(protocolPointString);
         this.taskText = getStringFromRowByIndex(row.getCell(1));//Поручение
          String usernameString = getStringFromRowByIndex(row.getCell(2));//Ответственный за координацию (замакима)
         List<String> names=new ArrayList<>();
@@ -71,6 +73,7 @@ public class NewExcellData {
             this.departments = splitByComma;
         }
 
+        System.out.println(protocolPoint+" "+protocolNumber+" "+sphere+" "+status);
     }
 
     private String getStringFromRowByIndex(Cell cell) {
